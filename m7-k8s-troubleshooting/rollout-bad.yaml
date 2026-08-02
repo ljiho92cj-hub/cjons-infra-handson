@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-rollout
+  namespace: cj-lab-trouble
+spec:
+  replicas: 3
+  progressDeadlineSeconds: 60
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: web-rollout
+  template:
+    metadata:
+      labels:
+        app: web-rollout
+    spec:
+      containers:
+        - name: web
+          image: nginx:cjons-missing-v2.1
+          imagePullPolicy: Never
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 3
+          resources:
+            requests:
+              cpu: 20m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi

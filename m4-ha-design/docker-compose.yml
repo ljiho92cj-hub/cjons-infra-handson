@@ -1,0 +1,71 @@
+x-etcd-common: &etcd-common
+  image: gcr.io/etcd-development/etcd:v3.6.11
+  pull_policy: never
+  healthcheck:
+    test: ["CMD", "etcdctl", "--endpoints=http://127.0.0.1:2379", "endpoint", "health"]
+    interval: 2s
+    timeout: 2s
+    retries: 30
+  networks:
+    - m4-ha-net
+
+services:
+  etcd1:
+    <<: *etcd-common
+    hostname: etcd1
+    command:
+      - etcd
+      - --name=etcd1
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd1:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd1:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=m4-ha-demo
+    volumes:
+      - etcd1-data:/etcd-data
+
+  etcd2:
+    <<: *etcd-common
+    hostname: etcd2
+    command:
+      - etcd
+      - --name=etcd2
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd2:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd2:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=m4-ha-demo
+    volumes:
+      - etcd2-data:/etcd-data
+
+  etcd3:
+    <<: *etcd-common
+    hostname: etcd3
+    command:
+      - etcd
+      - --name=etcd3
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd3:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://etcd3:2380
+      - --initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=m4-ha-demo
+    volumes:
+      - etcd3-data:/etcd-data
+
+volumes:
+  etcd1-data:
+  etcd2-data:
+  etcd3-data:
+
+networks:
+  m4-ha-net:
+    driver: bridge

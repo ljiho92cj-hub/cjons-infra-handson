@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crashloop
+  namespace: cj-lab-trouble
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36.1
+      imagePullPolicy: Never
+      command: ["/bin/sh", "-c"]
+      args: ["echo starting; echo missing configuration; exit 1"]
+      resources:
+        requests:
+          cpu: 5m
+          memory: 8Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi

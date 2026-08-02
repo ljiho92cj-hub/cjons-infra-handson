@@ -1,0 +1,14 @@
+# 저사양 프로필(low): 4 vCPU / 8GB RAM PC(WSL2 memory=5GB 할당) 대응 2노드 구성.
+# control-plane 1 + worker 1 로 M1~M8 전 모듈이 성립한다.
+#  - M5 EndpointSlice/트래픽 경로: worker 1대에 replica 2개가 배치되어 관찰 가능
+#  - M7 PDB drain 차단: 유일 worker를 drain하면 minAvailable=2 위반으로 동일하게 차단
+#  - M7 Pending: control-plane taint가 유지되므로 'untolerated taint' 사유도 동일 재현
+# 사용: CJONS_PROFILE=low 이면 setup_cluster.sh가 이 파일을 자동 선택한다.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: cjons-lab
+networking:
+  kubeProxyMode: iptables
+nodes:
+  - role: control-plane
+  - role: worker

@@ -1,0 +1,4 @@
+Aug 12 14:21:03 node01 kernel: Memory cgroup out of memory: Killed process 2481 (java) total-vm:6281140kB, anon-rss:2012340kB
+Aug 12 14:21:03 node01 kernel: oom_reaper: reaped process 2481 (java), now anon-rss:0kB
+Aug 12 14:21:05 node01 systemd[1]: app.service: Main process exited, code=killed, status=9/KILL
+Aug 12 14:21:05 node01 systemd[1]: app.service: Failed with result 'signal'.

@@ -1,0 +1,76 @@
+# M6 심화 참고자료 — "영향 격리" 설계 패턴 (선택, 시간 여유 있을 때만)
+# 한 워크로드의 부하가 같은 노드의 다른 워크로드로 번지지 않도록 겹겹이 통제하는 5종 세트 예시.
+# 이 파일은 kubectl apply 대상이 아니라 설계 구조를 읽기 위한 참고용입니다.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: api-server
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-resources
+  namespace: api-server
+spec:
+  # 1. 네임스페이스 전체 상한 — 워크로드 유형별로 네임스페이스를 나눈 뒤 이 상한으로 묶는다
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: api-server
+spec:
+  # 2. 개별 파드가 requests/limits를 안 적었을 때 강제되는 기본값
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 200m
+      memory: 256Mi
+    type: Container
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority-api
+value: 1000000
+globalDefault: false
+description: "자원 부족 시 낮은 우선순위 파드보다 먼저 스케줄되고 나중에 축출된다"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: high-priority-api
+  namespace: api-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: high-priority-api }
+  template:
+    metadata:
+      labels: { app: high-priority-api }
+    spec:
+      priorityClassName: high-priority-api
+      # 3. 노드풀 분리 — 성능 민감 워크로드를 별도 노드로 유도
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-type
+                operator: In
+                values: ["high-performance"]
+      containers:
+      - name: api
+        image: nginx:1.27.5-alpine
+        imagePullPolicy: Never
+        resources:
+          requests: { cpu: 200m, memory: 256Mi }
+          limits: { cpu: 500m, memory: 512Mi }

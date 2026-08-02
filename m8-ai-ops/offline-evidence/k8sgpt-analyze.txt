@@ -1,0 +1,23 @@
+CJONS M8 OFFLINE EVIDENCE (normalized, no external AI explanation)
+Course tool version: k8sgpt v0.4.36
+Namespace: cj-lab-ai
+Note: AI Provider: AI not used; --explain not set
+
+Problem 1
+Resource: Pod/cj-lab-ai/ai-demo-crashloop
+Finding: container app is repeatedly restarting; BackOff was reported.
+Hypothesis to verify: the application process exits during startup.
+
+Problem 2
+Resource: Pod/cj-lab-ai/ai-demo-pending
+Finding: Pod is Pending because the scheduler cannot place it.
+Hypothesis to verify: requested CPU exceeds available node capacity.
+
+Problem 3
+Resource: ConfigMap/cj-lab-ai/kube-root-ca.crt
+Finding: ConfigMap kube-root-ca.crt is not used by any pods in the namespace.
+Hypothesis to verify: an unused ConfigMap was left behind and should be cleaned up.
+
+This output is a hypothesis list. Verify it with describe, events, logs, and the manifest.
+Not every reported item is an action item. Decide which ones you would actually act on, and
+write down the evidence for each decision -- including the ones you decide to ignore.

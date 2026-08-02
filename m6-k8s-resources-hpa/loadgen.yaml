@@ -1,0 +1,33 @@
+# web-hpa Service에 지속 요청을 보내 CPU 사용률을 끌어올려 HPA scale-out을 유발한다.
+# 부하를 멈추려면: kubectl -n cj-lab-resources delete deployment loadgen
+# 삭제 후 scale-in까지 약 1분 30초 — scaleDown.stabilizationWindowSeconds=30(실습 관찰용,
+# 운영 기본값 300s)에 metrics 반영 지연이 더해진 시간이다. hpa.yaml 주석 참조.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+  namespace: cj-lab-resources
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loadgen
+  template:
+    metadata:
+      labels:
+        app: loadgen
+    spec:
+      containers:
+        - name: loadgen
+          image: busybox:1.36.1
+          imagePullPolicy: Never
+          command: ["/bin/sh", "-c"]
+          args:
+            - while true; do wget -T 1 -q -O- http://web-hpa >/dev/null || true; done
+          resources:
+            requests:
+              cpu: 10m
+              memory: 8Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi

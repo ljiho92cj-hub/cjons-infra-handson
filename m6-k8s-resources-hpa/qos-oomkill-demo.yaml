@@ -1,0 +1,53 @@
+# QoS 분류 관찰용. 이 파일만으로는 노드 메모리 압박이 없으므로 Pod 축출 순서를 실험하지 않는다.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-guaranteed
+  namespace: cj-lab-resources
+  labels:
+    demo: qos
+spec:
+  containers:
+    - name: app
+      image: nginx:1.27.5-alpine
+      imagePullPolicy: Never
+      resources:
+        requests:
+          cpu: 50m
+          memory: 32Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-burstable
+  namespace: cj-lab-resources
+  labels:
+    demo: qos
+spec:
+  containers:
+    - name: app
+      image: nginx:1.27.5-alpine
+      imagePullPolicy: Never
+      resources:
+        requests:
+          cpu: 20m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-besteffort
+  namespace: cj-lab-resources
+  labels:
+    demo: qos
+spec:
+  containers:
+    - name: app
+      image: nginx:1.27.5-alpine
+      imagePullPolicy: Never

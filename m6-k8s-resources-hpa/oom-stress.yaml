@@ -1,0 +1,27 @@
+# 컨테이너 limit OOM 전용. 노드 압박/축출 순서 실험이 아니다.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oom-stress
+  namespace: cj-lab-resources
+  labels:
+    demo: limit-oom
+spec:
+  restartPolicy: Never
+  containers:
+    - name: allocator
+      image: cjons-m2-lab:1.0
+      imagePullPolicy: Never
+      command: ["python3", "-c"]
+      args:
+        - |
+          chunks = []
+          while True:
+              chunks.append(bytearray(1024 * 1024))
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi

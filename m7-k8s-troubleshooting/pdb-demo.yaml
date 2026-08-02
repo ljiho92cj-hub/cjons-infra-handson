@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-pdb
+  namespace: cj-lab-trouble
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-pdb
+  template:
+    metadata:
+      labels:
+        app: web-pdb
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27.5-alpine
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: 20m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-pdb
+  namespace: cj-lab-trouble
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: web-pdb

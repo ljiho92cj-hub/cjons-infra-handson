@@ -1,0 +1,9 @@
+CJONS M8 OFFLINE EVIDENCE (normalized kubectl events excerpt)
+
+NAMESPACE  TYPE     REASON            OBJECT                         MESSAGE
+cj-lab-ai  Warning  BackOff           pod/ai-demo-crashloop          Back-off restarting failed container app
+cj-lab-ai  Warning  FailedScheduling  pod/ai-demo-pending            0/3 nodes are available: 1 node had an untolerated control-plane taint, 2 Insufficient cpu.
+
+Manifest cross-check:
+- ai-demo-crashloop command exits with code 1 after printing a missing configuration message.
+- ai-demo-pending requests cpu: "100"; no course kind node has 100 allocatable CPU cores.

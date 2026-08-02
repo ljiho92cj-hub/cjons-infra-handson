@@ -1,0 +1,99 @@
+# ============================================================================
+# 선택 실습 / 참고 자료 — Custom & External Metrics 기반 HPA (심화)
+# ============================================================================
+# 이 파일은 "그대로 적용"이 아니라 "구조를 읽기 위한" 참고 예시입니다.
+# 표준 실습(Lab 6-1/6-2)에는 포함되지 않는 선택 심화 자료입니다.
+# 개념 구조를 읽고 kubectl get --raw 확인 명령을 검토하는 용도로 사용합니다.
+#
+# 전제:
+#   1) Prometheus가 클러스터 메트릭(container_* 계열)을 이미 수집하고 있어야 한다.
+#   2) prometheus-adapter를 helm으로 설치해야 이 ConfigMap이 의미를 가진다.
+#      이 파일은 Helm values 형식이 아니므로 `helm ... -f`에 전달하지 않는다.
+#      실제 설치 시에는 prometheus-adapter 배포판의 values 스키마로 변환해야 한다.
+#   3) 설치가 끝나면 API 서버에 custom.metrics.k8s.io / external.metrics.k8s.io가
+#      APIService로 새로 등록된다. 아래 확인 명령으로 검증한다.
+#
+# 확인 명령 (어댑터가 설치된 클러스터에서 실행):
+#   kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq
+#   kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq | grep "pods/"
+#   kubectl get --raw "/apis/external.metrics.k8s.io/v1beta1" | jq
+#   kubectl get apiservices | grep metrics.k8s.io
+#
+# 구조 요약:
+#   seriesQuery   : Prometheus에서 "어떤 raw 메트릭을 가져올 것인가" (정규식 + 라벨 셀렉터)
+#   resources     : 그 메트릭을 어떤 K8s 리소스(namespace/pod 등)에 매핑할 것인가
+#   metricsQuery  : raw 메트릭을 실제 utilization 값으로 만드는 PromQL 템플릿
+#   externalRules : K8s 리소스에 속하지 않는 지표(큐 길이 등)를 external.metrics.k8s.io로 노출
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-adapter-example
+  namespace: monitoring
+data:
+  config.yaml: |
+    rules:
+      # --- Custom Metric 예시: 컨테이너 CPU throttle 횟수 ---
+      # container_cpu_cfs_throttled_periods_total 을 pod 단위로 집계해
+      # "pods/cpu_cfs_throttled_periods" 라는 custom metric으로 노출한다.
+      - seriesQuery: '{__name__=~"^container_cpu_cfs_throttled_periods_total$",namespace!="",pod!=""}'
+        resources:
+          overrides:
+            namespace: {resource: "namespace"}
+            pod: {resource: "pod"}
+        name:
+          matches: "^container_(.*)_total$"
+          as: "pods/${1}"
+        metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>,container!="POD"}[2m])) by (<<.GroupBy>>)'
+
+      # --- Custom Metric 예시: 컨테이너 메모리 working set ---
+      - seriesQuery: '{__name__="container_memory_working_set_bytes",namespace!="",pod!=""}'
+        resources:
+          overrides:
+            namespace: {resource: "namespace"}
+            pod: {resource: "pod"}
+        name:
+          matches: "^container_(.*)$"
+          as: "pods/${1}"
+        metricsQuery: 'avg(<<.Series>>{<<.LabelMatchers>>,container!="POD"}) by (<<.GroupBy>>)'
+
+    externalRules:
+      # --- External Metric 예시: 메시지 큐 대기 길이 ---
+      # K8s 리소스에 속하지 않는 지표(예: 큐 시스템의 ready 메시지 수)를
+      # external.metrics.k8s.io/v1beta1 의 "queue_messages_ready" 로 노출한다.
+      # HPA는 이 이름을 spec.metrics[].external.metric.name 으로 참조한다.
+      - seriesQuery: '{__name__="queue_messages_ready_total",queue!=""}'
+        resources:
+          overrides:
+            queue: {resource: "queue"}
+        name:
+          matches: "^queue_messages_ready_total$"
+          as: "queue_messages_ready"
+        metricsQuery: 'sum(<<.Series>>{<<.LabelMatchers>>}) by (queue)'
+
+---
+# ============================================================================
+# 참고: 위 external metric을 실제로 사용하는 HPA 예시 (적용 대상 아님, 구조 참고용)
+# ============================================================================
+# apiVersion: autoscaling/v2
+# kind: HorizontalPodAutoscaler
+# metadata:
+#   name: queue-worker-hpa
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: queue-worker
+#   minReplicas: 1
+#   maxReplicas: 10
+#   metrics:
+#     - type: External
+#       external:
+#         metric:
+#           name: queue_messages_ready
+#           selector:
+#             matchLabels:
+#               queue: orders
+#         target:
+#           type: AverageValue
+#           averageValue: "30"   # worker 1개당 큐 메시지 30개를 목표로 스케일

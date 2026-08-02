@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# kind/kubeconfig·이미지·매니페스트 사전 캐시
+.lab/
+*.kubeconfig
+kind-logs/
+
+
+# 개인 실습 결과물
+*.local.md
+*_scratch.*
+
+# Python·검사 도구가 만드는 로컬 파생물
+__pycache__/
+*.pyc
+*.inspect.ndjson
+
+# 실습 컨테이너가 만드는 산출물
+verify_report_*.md
+.lab-*/

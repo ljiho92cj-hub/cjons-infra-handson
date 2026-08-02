@@ -1,0 +1,35 @@
+[
+  {
+    "time": "2026-08-13T16:02:11+09:00",
+    "severity": "critical",
+    "source": "k8s",
+    "alert": "HighPodRestart",
+    "namespace": "payment-demo",
+    "pod": "api-7d9f",
+    "value": 12
+  },
+  {
+    "time": "2026-08-13T16:03:05+09:00",
+    "severity": "warning",
+    "source": "node",
+    "alert": "MemoryPressure",
+    "node": "worker-2",
+    "value": "true"
+  },
+  {
+    "time": "2026-08-13T16:04:20+09:00",
+    "severity": "critical",
+    "source": "service",
+    "alert": "ErrorRateHigh",
+    "service": "payment-api",
+    "value": "18.4%"
+  },
+  {
+    "time": "2026-08-13T16:06:18+09:00",
+    "severity": "warning",
+    "source": "storage",
+    "alert": "DiskLatencyHigh",
+    "device": "nvme1n1",
+    "value": "42ms"
+  }
+]

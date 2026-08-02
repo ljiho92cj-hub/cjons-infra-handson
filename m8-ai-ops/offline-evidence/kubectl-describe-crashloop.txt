@@ -1,0 +1,20 @@
+CJONS M8 OFFLINE EVIDENCE (normalized kubectl describe/log excerpt)
+
+Name:         ai-demo-crashloop
+Namespace:    cj-lab-ai
+Status:       Running
+Containers:
+  app:
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+    Restart Count:  greater than 0
+
+Events:
+  Type     Reason   From     Message
+  Warning  BackOff  kubelet  Back-off restarting failed container app in pod ai-demo-crashloop
+
+Previous container log:
+ERROR config file /config/app.yaml not found

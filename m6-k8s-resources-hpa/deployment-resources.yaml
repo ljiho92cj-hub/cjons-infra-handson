@@ -1,0 +1,50 @@
+# Lab 6-1/6-2 공용 워크로드.
+# requests(cpu 50m, mem 32Mi) != limits(cpu 200m, mem 64Mi) 이므로 QoS는 Burstable이다.
+# 스케줄러는 requests(cpu 50m/mem 32Mi)만 보고 노드를 고른다.
+# HPA의 target utilization(hpa.yaml)은 이 requests 대비 사용률로 계산된다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-hpa
+  namespace: cj-lab-resources
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-hpa
+  template:
+    metadata:
+      labels:
+        app: web-hpa
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27.5-alpine
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-hpa
+  namespace: cj-lab-resources
+spec:
+  selector:
+    app: web-hpa
+  ports:
+    - port: 80
+      targetPort: 80
