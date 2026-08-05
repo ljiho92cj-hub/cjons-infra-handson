@@ -20,3 +20,6 @@ __pycache__/
 # 실습 컨테이너가 만드는 산출물
 verify_report_*.md
 .lab-*/
+
+# VSCode
+.VSCode
